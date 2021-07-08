@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Net;
+using System.IO;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
+using System.Threading;
 using Serilog;
 
 namespace NetBLogger
@@ -16,19 +18,32 @@ namespace NetBLogger
                 .WriteTo.File($"Logs\\NetBApp_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.log")
                 .CreateLogger();
 
-            //Evaluating startup arguments
-            //if (args.Length > 0)
-            //{
-                
-            //}
-
             Log.Information("Starting NetBLogger now");
             try
             {
+                int nloop = 0;
+            
+                Log.Information("Initializing output CSV file");
+                var writer = new StreamWriter($"Logs\\SpeedLog_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.csv");
+                var csv = new CsvHelper.CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+
                 Log.Information("Getting system interfaces");
                 SystemInterfaces();
-                Log.Information("Perfming speed tests");
-                PerformSpeedTest();
+                
+                for (nloop = 0; true; nloop++)
+                {
+                    Log.Information($"Performing speed tests at loop {nloop}");
+                    var resTemp = PerformSpeedTest();
+                    SpeedTestResult resultObj = new SpeedTestResult()
+                    {
+                        TimeStamp = resTemp.Item1,
+                        Speed = resTemp.Item2
+                    };
+                    csv.WriteRecord(resultObj);
+                    csv.Flush();
+                    
+                    Thread.Sleep(10000); //It is trash, i know. But it works for now.
+                }
             }
             catch(Exception ex)
             {
@@ -40,8 +55,6 @@ namespace NetBLogger
             {
                 Log.Information("Application closing");
             }
-
-            return 0;
         }
 
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
@@ -63,7 +76,7 @@ namespace NetBLogger
             //var resultSTest = taskSpeedSTest.Result;
             //Log.Information("SpeedTest.com done");
 
-            Log.Information($"Fast.com: {resultFast.Speed}");
+            Log.Information($"Fast.com: {resultFast.Speed} {resultFast.Unit}");
             return (DateTime.Now, resultFast.Speed);
         }
 
@@ -89,6 +102,12 @@ namespace NetBLogger
             }
 
             return;
+        }
+
+        public class SpeedTestResult
+        {
+            public DateTime TimeStamp { get; init; }
+            public double Speed { get; init; }
         }
     }
 }
