@@ -5,6 +5,7 @@ using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Threading;
 using Serilog;
+using CsvHelper;
 
 namespace NetBLogger
 {
@@ -24,14 +25,22 @@ namespace NetBLogger
                 int nloop = 0;
             
                 Log.Information("Initializing output CSV file");
+                CsvHelper.Configuration.CsvConfiguration csvCfg = new CsvHelper.Configuration.CsvConfiguration(System.Globalization.CultureInfo.InvariantCulture)
+                {
+                    Delimiter = ";",
+                    HasHeaderRecord = true,
+                };
+
                 var writer = new StreamWriter($"Logs\\SpeedLog_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.csv");
-                var csv = new CsvHelper.CsvWriter(writer, System.Globalization.CultureInfo.InvariantCulture);
+                var csv = new CsvHelper.CsvWriter(writer, csvCfg);
+                csv.WriteHeader<SpeedTestResult>();
 
                 Log.Information("Getting system interfaces");
                 SystemInterfaces();
                 
                 for (nloop = 0; true; nloop++)
                 {
+                    csv.NextRecord();
                     Log.Information($"Performing speed tests at loop {nloop}");
                     var resTemp = PerformSpeedTest();
                     SpeedTestResult resultObj = new SpeedTestResult()
@@ -42,7 +51,7 @@ namespace NetBLogger
                     csv.WriteRecord(resultObj);
                     csv.Flush();
                     
-                    Thread.Sleep(10000); //It is trash, i know. But it works for now.
+                    Thread.Sleep(60000); //It is trash, i know. But it works for now.
                 }
             }
             catch(Exception ex)
