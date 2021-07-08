@@ -16,7 +16,7 @@ namespace NetBLogger
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 .WriteTo.Console()
-                .WriteTo.File($"Logs\\NetBApp_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.log")
+                .WriteTo.File(Path.Combine(Environment.CurrentDirectory, "Logs", $"NetBApp_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.log"))
                 .CreateLogger();
 
             Log.Information("Starting NetBLogger now");
@@ -31,7 +31,8 @@ namespace NetBLogger
                     HasHeaderRecord = true,
                 };
 
-                var writer = new StreamWriter($"Logs\\SpeedLog_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.csv");
+                //var writer = new StreamWriter($"Logs\\SpeedLog_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.csv");
+                var writer = new StreamWriter(Path.Combine(Environment.CurrentDirectory, "Logs", $"SpeedLog_{DateTime.Now.ToString("ddMMyyyy_HHmmss")}.csv"));
                 var csv = new CsvHelper.CsvWriter(writer, csvCfg);
                 csv.WriteHeader<SpeedTestResult>();
 
